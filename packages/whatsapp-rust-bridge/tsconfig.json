@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "esnext",
+    "lib": ["es2022", "dom"],
+    "types": ["node"],
+    "strict": true,
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "rootDir": "./ts",
+    /* These two options are crucial for the postbuild step */
+    "declaration": true,
+    "emitDeclarationOnly": true
+  },
+  "include": ["ts/**/*.ts"]
+}
