@@ -137,3 +137,24 @@ export class USyncQuery {
 		return this
 	}
 }
+
+/**
+ * Build a USync query that resolves username handles (`@john.doe`) to chat
+ * addresses. WA keys the lookup on the contact protocol — the handle travels as
+ * the `username` attribute of a `<contact>` child inside `<user>` — and the lid
+ * protocol is requested back so callers can route LID-first when an account has
+ * no public phone number. The leading `@` is stripped because the wire carries
+ * the bare handle.
+ */
+export const buildUsernameQuery = (usernames: string[]): USyncQuery => {
+	const query = new USyncQuery().withContactProtocol().withUsernameProtocol().withLIDProtocol()
+
+	for (const username of usernames) {
+		const normalized = username.trim().replace(/^@/, '')
+		if (normalized) {
+			query.withUser(new USyncUser().withUsername(normalized))
+		}
+	}
+
+	return query
+}

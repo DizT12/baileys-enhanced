@@ -21,7 +21,8 @@ import {
 	QueryIds,
 	ReachoutTimelockEnforcementType,
 	type ReachoutTimelockState,
-	type SocketConfig
+	type SocketConfig,
+	type UsernameQueryResult
 } from '../Types'
 import { DisconnectReason, XWAPaths } from '../Types'
 import {
@@ -62,7 +63,7 @@ import {
 	S_WHATSAPP_NET
 } from '../WABinary'
 import { BinaryInfo } from '../WAM/BinaryInfo.js'
-import { USyncQuery, USyncUser } from '../WAUSync/'
+import { buildUsernameQuery, USyncQuery, USyncUser } from '../WAUSync/'
 import { WebSocketClient } from './Client'
 import { executeWMexQuery } from './mex.js'
 
@@ -475,6 +476,31 @@ export const makeSocket = (config: SocketConfig) => {
 		if (results) {
 			return results.list.filter(a => !!a.contact).map(({ contact, id }) => ({ jid: id, exists: contact as boolean }))
 		}
+	}
+
+	const queryUsername = async (...usernames: string[]): Promise<UsernameQueryResult[]> => {
+		// WA keyed this lookup on the contact protocol: the handle travels as the
+		// `username` attribute of a `<contact>` child inside `<user>`. The username
+		// and lid protocols are requested back so we can route LID-first when the
+		// account has no public phone number.
+		const usyncQuery = buildUsernameQuery(usernames)
+
+		if (usyncQuery.users.length === 0) {
+			return [] // return early without forcing an empty query
+		}
+
+		const results = await executeUSyncQuery(usyncQuery)
+
+		if (!results) {
+			return []
+		}
+
+		return results.list.map(({ id, username, lid, contact }) => ({
+			jid: id,
+			username: username as string | undefined,
+			lid: lid as string | undefined,
+			exists: contact === true
+		}))
 	}
 
 	const pnFromLIDUSync = async (jids: string[]): Promise<LIDMapping[] | undefined> => {
@@ -1360,6 +1386,7 @@ export const makeSocket = (config: SocketConfig) => {
 		sendWAMBuffer,
 		executeUSyncQuery,
 		onWhatsApp,
+		queryUsername,
 		fetchAccountReachoutTimelock,
 		fetchNewChatMessageCap
 	}

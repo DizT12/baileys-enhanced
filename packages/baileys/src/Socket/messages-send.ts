@@ -100,6 +100,26 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	const getLIDForPN = signalRepository.lidMapping.getLIDForPN.bind(signalRepository.lidMapping)
 
 	/**
+	 * Resolve a chat address before sending. Username handles (`@john.doe`) are
+	 * looked up via USync and routed LID-first: when the account hides its phone
+	 * number, WA returns a `@lid` address that keeps routing and identity stable.
+	 * Real JIDs never start with `@`, so anything else is passed through.
+	 */
+	const resolveSendJid = async (jid: string): Promise<string> => {
+		if (!jid.startsWith('@')) {
+			return jid
+		}
+
+		const matches = await sock.queryUsername(jid)
+		const resolved = matches.find(a => a.exists) || matches[0]
+		if (!resolved) {
+			throw new Boom(`Username not found: ${jid}`, { statusCode: 404 })
+		}
+
+		return resolved.jid
+	}
+
+	/**
 	 * Set of tctoken storage JIDs with a fire-and-forget `issuePrivacyTokens` IQ in flight.
 	 * Prevents duplicate IQs from rapid back-to-back sends before `senderTimestamp` persists.
 	 * Entries are always removed in `.finally()`, so the set is bounded by concurrency.
@@ -1386,11 +1406,12 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		},
 		sendMessage: async (jid: string, content: AnyMessageContent, options: MiscMessageGenerationOptions = {}) => {
 			const userJid = authState.creds.me!.id
+			const resolvedJid = await resolveSendJid(jid)
 			if (
 				typeof content === 'object' &&
 				'disappearingMessagesInChat' in content &&
 				typeof content['disappearingMessagesInChat'] !== 'undefined' &&
-				isJidGroup(jid)
+				isJidGroup(resolvedJid)
 			) {
 				const { disappearingMessagesInChat } = content
 				const value =
@@ -1399,9 +1420,9 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 							? WA_DEFAULT_EPHEMERAL
 							: 0
 						: disappearingMessagesInChat
-				await groupToggleEphemeral(jid, value)
+				await groupToggleEphemeral(resolvedJid, value)
 			} else {
-				const fullMsg = await generateWAMessage(jid, content, {
+				const fullMsg = await generateWAMessage(resolvedJid, content, {
 					logger,
 					userJid,
 					getUrlInfo: text =>
@@ -1458,7 +1479,7 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 					})
 				}
 
-				await relayMessage(jid, fullMsg.message!, {
+				await relayMessage(resolvedJid, fullMsg.message!, {
 					messageId: fullMsg.key.id!,
 					useCachedGroupMetadata: options.useCachedGroupMetadata,
 					additionalAttributes,
