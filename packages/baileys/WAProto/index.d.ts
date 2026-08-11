@@ -3548,11 +3548,15 @@ export namespace proto {
 
         interface IStatusAudienceMetadata {
             audienceType?: (proto.ContextInfo.StatusAudienceMetadata.AudienceType|null);
+            listName?: (string|null);
+            listEmoji?: (string|null);
         }
 
         class StatusAudienceMetadata implements IStatusAudienceMetadata {
             constructor(p?: proto.ContextInfo.IStatusAudienceMetadata);
             public audienceType?: (proto.ContextInfo.StatusAudienceMetadata.AudienceType|null);
+            public listName?: (string|null);
+            public listEmoji?: (string|null);
             public static create(properties?: proto.ContextInfo.IStatusAudienceMetadata): proto.ContextInfo.StatusAudienceMetadata;
             public static encode(m: proto.ContextInfo.IStatusAudienceMetadata, w?: $protobuf.Writer): $protobuf.Writer;
             public static decode(r: ($protobuf.Reader|Uint8Array), l?: number): proto.ContextInfo.StatusAudienceMetadata;
@@ -3566,7 +3570,8 @@ export namespace proto {
 
             enum AudienceType {
                 UNKNOWN = 0,
-                CLOSE_FRIENDS = 1
+                CLOSE_FRIENDS = 1,
+                CUSTOM_LIST = 2
             }
         }
 
