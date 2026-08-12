@@ -1,15 +1,15 @@
 {
-  "name": "baileys",
+  "name": "bilz",
   "type": "module",
-  "version": "7.0.0-rc14",
+  "version": "7.0.0-rc14.1",
   "description": "A WebSockets library for interacting with WhatsApp Web",
   "keywords": [
     "whatsapp",
     "automation"
   ],
-  "homepage": "https://github.com/WhiskeySockets/Baileys/",
+  "homepage": "https://github.com/DizT12/baileys-enhanced/",
   "repository": {
-    "url": "git@github.com:WhiskeySockets/Baileys.git"
+    "url": "git@github.com:DizT12/baileys-enhanced.git"
   },
   "license": "MIT",
   "author": "Rajeh Taher",
@@ -32,7 +32,7 @@
     "format": "prettier --write \"src/**/*.{ts,js,json,md}\"",
     "lint": "tsc && eslint src --ext .js,.ts",
     "lint:fix": "npm run format && npm run lint -- --fix",
-    "prepack": "npm run build",
+    "prepack": "pnpm run build",
     "preinstall": "node ./engine-requirements.js",
     "release": "release-it",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testMatch '**/*.test.ts'",
