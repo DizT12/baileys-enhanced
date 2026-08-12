@@ -74,6 +74,7 @@ export type MessageWithContextInfo =
 	| 'interactiveResponseMessage'
 	| 'pollCreationMessage'
 	| 'requestPhoneNumberMessage'
+	| 'richResponseMessage'
 	| 'messageHistoryBundle'
 	| 'eventMessage'
 	| 'newsletterAdminInviteMessage'
@@ -229,6 +230,27 @@ export type WASendableProduct = Omit<proto.Message.ProductMessage.IProductSnapsh
 	productImage: WAMediaUpload
 }
 
+export type InteractiveButtonContent = {
+	/** label rendered on the button */
+	displayText: string
+	/** stable id echoed back when the button is tapped */
+	id: string
+}
+
+export type InteractiveMessageContent = {
+	/** optional short line rendered above the body */
+	header?: string
+	title: string
+	/** small text rendered under the buttons */
+	footer?: string
+	body?: string
+	/** optional header media — uploaded and rendered above the body */
+	media?: WAMediaUpload
+	mediaType?: 'image' | 'video'
+	/** quick-reply buttons rendered under the body */
+	buttons?: InteractiveButtonContent[]
+}
+
 export type AnyRegularMessageContent = (
 	| ({
 			text: string
@@ -280,6 +302,12 @@ export type AnyRegularMessageContent = (
 			businessOwnerJid?: string
 			body?: string
 			footer?: string
+	  }
+	| {
+			interactiveMessage: InteractiveMessageContent
+	  }
+	| {
+			richResponse: proto.IAIRichResponseMessage
 	  }
 	| SharePhoneNumber
 	| RequestPhoneNumber

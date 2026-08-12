@@ -607,6 +607,41 @@ export const generateWAMessageContent = async (
 				initiatedByMe: true
 			}
 		}
+	} else if (hasNonNullishProperty(message, 'interactiveMessage')) {
+		const { header, title, footer, body, media, mediaType, buttons } = message.interactiveMessage
+		const interactiveHeader: proto.Message.InteractiveMessage.IHeader = {}
+		if (header) {
+			interactiveHeader.title = header
+		}
+
+		if (media) {
+			// header media is uploaded the same way as a standalone image/video message
+			const prepared =
+				mediaType === 'video'
+					? await prepareWAMessageMedia({ video: media }, options)
+					: await prepareWAMessageMedia({ image: media }, options)
+			if (mediaType === 'video') {
+				interactiveHeader.videoMessage = prepared.videoMessage
+			} else {
+				interactiveHeader.imageMessage = prepared.imageMessage
+			}
+
+			interactiveHeader.hasMediaAttachment = true
+		}
+
+		m.interactiveMessage = proto.Message.InteractiveMessage.create({
+			header: Object.keys(interactiveHeader).length > 0 ? interactiveHeader : undefined,
+			body: { text: body ?? title },
+			footer: footer ? { text: footer } : undefined,
+			nativeFlowMessage: {
+				buttons: buttons?.map(button => ({
+					name: 'quick_reply',
+					buttonParamsJson: JSON.stringify({ display_text: button.displayText, id: button.id })
+				}))
+			}
+		})
+	} else if (hasNonNullishProperty(message, 'richResponse')) {
+		m.richResponseMessage = message.richResponse
 	} else {
 		m = await prepareWAMessageMedia(message, options)
 	}

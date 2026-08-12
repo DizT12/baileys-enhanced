@@ -1,5 +1,5 @@
 import type { NewsletterCreateResponse, SocketConfig, WAMediaUpload } from '../Types'
-import type { NewsletterMetadata, NewsletterUpdate } from '../Types'
+import type { NewsletterMetadata, NewsletterReactionMode, NewsletterUpdate } from '../Types'
 import { QueryIds, XWAPaths } from '../Types'
 import { generateProfilePicture } from '../Utils/messages-media'
 import { getBinaryNodeChild } from '../WABinary'
@@ -115,6 +115,21 @@ export const makeNewsletterSocket = (config: SocketConfig) => {
 
 		newsletterUnmute: (jid: string) => {
 			return executeWMexQuery({ newsletter_id: jid }, QueryIds.UNMUTE, XWAPaths.xwa2_newsletter_unmute_v2)
+		},
+
+		newsletterReactionMode: async (jid: string, mode: NewsletterReactionMode) => {
+			return executeWMexQuery(
+				{
+					newsletter_id: jid,
+					updates: {
+						settings: {
+							reaction_codes: { value: mode }
+						}
+					}
+				},
+				QueryIds.UPDATE_METADATA,
+				XWAPaths.xwa2_newsletter_update
+			)
 		},
 
 		newsletterUpdateName: async (jid: string, name: string) => {

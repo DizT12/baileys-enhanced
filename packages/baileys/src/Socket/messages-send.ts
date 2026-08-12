@@ -7,10 +7,12 @@ import type {
 	MessageReceiptType,
 	MessageRelayOptions,
 	MiscMessageGenerationOptions,
+	ReachoutTimelockState,
 	SocketConfig,
 	WAMessage,
 	WAMessageKey
 } from '../Types'
+import { ReachoutTimelockEnforcementType } from '../Types'
 import {
 	aggregateMessageKeysNotFromMe,
 	assertMediaContent,
@@ -98,6 +100,15 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 	} = sock
 
 	const getLIDForPN = signalRepository.lidMapping.getLIDForPN.bind(signalRepository.lidMapping)
+
+	// Track the last known reachout timelock so sendMessage can reject up-front
+	// instead of only reacting to a 463 NACK after the message is already sent.
+	let reachoutTimeLock: ReachoutTimelockState | undefined
+	ev.on('connection.update', ({ reachoutTimeLock: updated }) => {
+		if (updated) {
+			reachoutTimeLock = updated
+		}
+	})
 
 	/**
 	 * Resolve a chat address before sending. Username handles (`@john.doe`) are
@@ -1407,6 +1418,15 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 		sendMessage: async (jid: string, content: AnyMessageContent, options: MiscMessageGenerationOptions = {}) => {
 			const userJid = authState.creds.me!.id
 			const resolvedJid = await resolveSendJid(jid)
+			// reject early while a reachout timelock is active — sending would
+			// otherwise burn a NACK round-trip before failing with 463
+			if (reachoutTimeLock?.isActive && reachoutTimeLock.enforcementType !== ReachoutTimelockEnforcementType.DEFAULT) {
+				throw new Boom(
+					`Reachout timelock is active (${reachoutTimeLock.enforcementType ?? 'unknown'}); message not sent`,
+					{ statusCode: 403 }
+				)
+			}
+
 			if (
 				typeof content === 'object' &&
 				'disappearingMessagesInChat' in content &&
@@ -1476,6 +1496,28 @@ export const makeMessagesSocket = (config: SocketConfig) => {
 						attrs: {
 							event_type: 'creation'
 						}
+					})
+				} else if ('interactiveMessage' in content && !!content.interactiveMessage) {
+					// native-flow interactive messages ride a <biz> node so WA
+					// renders the buttons instead of treating them as plain text
+					additionalNodes.push({
+						tag: 'biz',
+						attrs: { type: 'biz' },
+						content: [
+							{
+								tag: 'interactive',
+								attrs: {},
+								content: [
+									{
+										tag: 'native_flow',
+										attrs: {
+											from: userJid,
+											to: jid
+										}
+									}
+								]
+							}
+						]
 					})
 				}
 

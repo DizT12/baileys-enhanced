@@ -1154,6 +1154,10 @@ export const makeSocket = (config: SocketConfig) => {
 		ev.emit('connection.update', { connection: 'open' })
 		void sendUnifiedSession()
 
+		// Fetch the reachout timelock up-front so the send path can reject early
+		// instead of only after the first 463 NACK.
+		void fetchAccountReachoutTimelock().catch(err => logger.warn({ err }, 'failed to pre-fetch reachout timelock'))
+
 		if (node.attrs.lid && authState.creds.me?.id) {
 			const myLID = node.attrs.lid
 			process.nextTick(async () => {

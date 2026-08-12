@@ -3,6 +3,7 @@ export enum XWAPaths {
 	xwa2_newsletter_subscribers = 'xwa2_newsletter_subscribers',
 	xwa2_newsletter_view = 'xwa2_newsletter_view',
 	xwa2_newsletter_metadata = 'xwa2_newsletter',
+	xwa2_newsletter_update = 'xwa2_newsletter_update',
 	xwa2_newsletter_admin_count = 'xwa2_newsletter_admin',
 	xwa2_newsletter_mute_v2 = 'xwa2_newsletter_mute_v2',
 	xwa2_newsletter_unmute_v2 = 'xwa2_newsletter_unmute_v2',
@@ -77,6 +78,7 @@ export interface NewsletterCreateResponse {
 	}
 }
 export type NewsletterViewRole = 'ADMIN' | 'GUEST' | 'OWNER' | 'SUBSCRIBER'
+export type NewsletterReactionMode = 'ALL' | 'BASIC' | 'NONE'
 export interface NewsletterMetadata {
 	id: string
 	owner?: string

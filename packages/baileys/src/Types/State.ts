@@ -72,7 +72,10 @@ export enum ReachoutTimelockEnforcementType {
 	BIZ_QUALITY = 'BIZ_QUALITY',
 	/** This means there is no restriction */
 	DEFAULT = 'DEFAULT',
-	WEB_COMPANION_ONLY = 'WEB_COMPANION_ONLY'
+	WEB_COMPANION_ONLY = 'WEB_COMPANION_ONLY',
+	/** server-reported enforcement types the WA Web schema does not model */
+	BULK_MESSAGING = 'BULK_MESSAGING',
+	RESTRICT_ALL_COMPANIONS = 'RESTRICT_ALL_COMPANIONS'
 }
 
 export enum NewChatMessageCappingStatusType {
